@@ -1,0 +1,214 @@
+/* ============ 微信风格全局样式(白色主题) ============ */
+:root {
+  --wx-green: #07c160;   /* 强调色:进度条/链接/徽标等小点缀 */
+  --wx-green-dark: #06ad56;
+  --wx-header-bg: #ffffff;      /* 顶栏背景(白) */
+  --wx-header-text: #191919;    /* 顶栏文字(深) */
+  --wx-bg: #ededed;
+  --wx-white: #ffffff;
+  --wx-surface: #f7f7f7;   /* 顶栏/输入栏/导航底色 */
+  --wx-hover: #f0f0f0;     /* 列表悬停/按压 */
+  --wx-active: #e5e5e5;    /* 列表选中 */
+  --wx-input-bg: #ffffff;
+  --wx-text: #191919;
+  --wx-text-light: #888888;
+  --wx-border: #e5e5e5;
+  --wx-bubble-other: #ffffff;
+  --wx-bubble-self: #95ec69;
+  --wx-danger: #fa5151;
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --wx-header-bg: #1c1e21;
+    --wx-header-text: #e8eaed;
+    --wx-bg: #111214;
+    --wx-white: #1c1e21;
+    --wx-surface: #1c1e21;
+    --wx-hover: #26292e;
+    --wx-active: #2c3036;
+    --wx-input-bg: #26292e;
+    --wx-text: #e8eaed;
+    --wx-text-light: #9aa0a6;
+    --wx-border: #33363b;
+    --wx-bubble-other: #26292e;
+    --wx-bubble-self: #166b41;
+    --wx-danger: #f28b82;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  width: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  color: var(--wx-text);
+  background: var(--wx-bg);
+  -webkit-font-smoothing: antialiased;
+  /* 取消整体页面上下滑动回弹(内部列表仍正常滚动) */
+  overscroll-behavior: none;
+  /* 消除移动端双击缩放/双击滚动跳动 */
+  touch-action: manipulation;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* ---------- 通用 ---------- */
+.btn {
+  border: 1px solid var(--wx-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  background: var(--wx-white);
+  color: var(--wx-text);
+  font-weight: 500;
+  transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn.ghost {
+  background: var(--wx-white);
+  color: var(--wx-text);
+  border: 1px solid var(--wx-border);
+}
+.btn.danger { background: var(--wx-danger); color: #fff; border-color: transparent; }
+.btn.small { padding: 4px 10px; font-size: 12px; border-radius: 4px; }
+
+.input {
+  border: 1px solid var(--wx-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background: var(--wx-input-bg);
+  color: var(--wx-text);
+  width: 100%;
+}
+.input:focus { border-color: var(--wx-green); }
+
+.card {
+  background: var(--wx-white);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.empty {
+  text-align: center;
+  color: var(--wx-text-light);
+  padding: 40px 0;
+  font-size: 14px;
+}
+
+/* ---------- 布局 ---------- */
+.page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.page-header {
+  background: var(--wx-header-bg);
+  color: var(--wx-header-text);
+  padding: 12px 16px;
+  font-size: 17px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--wx-border);
+}
+
+.page-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+}
+
+/* ---------- 底部导航 ---------- */
+.tabbar {
+  display: none;
+  flex-shrink: 0;
+  background: var(--wx-surface);
+  border-top: 1px solid var(--wx-border);
+  min-height: 56px;
+  height: auto;
+  padding-bottom: env(safe-area-inset-bottom); /* iOS 手势条安全区 */
+  box-sizing: content-box;
+}
+.tabbar a {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--wx-text-light);
+  text-decoration: none;
+  gap: 2px;
+  padding: 5px 0;
+  -webkit-tap-highlight-color: transparent; /* 取消手机端点击阴影 */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.tabbar a.active { color: var(--wx-text); font-weight: 600; }
+.tabbar a svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+/* ---------- 桌面双栏 ---------- */
+.chat-layout {
+  display: flex;
+  height: 100%;
+}
+.chat-list-panel {
+  width: 280px;
+  background: var(--wx-white);
+  border-right: 1px solid var(--wx-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.chat-main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* 移动端:单栏切换 */
+@media (max-width: 768px) {
+  .chat-layout.desktop-chat {
+    display: block;
+  }
+  .chat-list-panel {
+    width: 100%;
+    height: 100%;
+    border-right: none;
+  }
+  .chat-main-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--wx-bg);
+  }
+  .tabbar { display: flex; }
+  .hide-on-mobile { display: none !important; }
+}
