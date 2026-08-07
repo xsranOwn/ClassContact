@@ -64,20 +64,21 @@ DB_NAME=chatroom
 JWT_SECRET=please-change-me
 ```
 
-### 3. 一键初始化(建库建表 + 管理员 + 自动生成 .env / JWT_SECRET)
+### 3. 一键初始化(建库建表 + 管理员 + 自动生成 .env / JWT_SECRET / VAPID)
 
 ```bash
 npm run init
 ```
 
-该命令自动完成四件事:
+该命令自动完成五件事:
 
 1. **生成 `.env`**:若不存在,从 `.env.example` 复制
 2. **生成 `JWT_SECRET`**:若缺失或仍为占位值(`change-me-to-a-long-random-string`),自动写入 96 位随机密钥
-3. **建库建表**:自动创建 `chatroom` 库与全部表(仅操作该库,幂等)
-4. **创建管理员**:默认 `admin` / `admin123`(可用环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 覆盖)
+3. **生成 VAPID 密钥对**(Web Push 推送):若 `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` 为空,自动生成并写入
+4. **建库建表**:自动创建 `chatroom` 库与全部表(仅操作该库,幂等)
+5. **创建管理员**:默认 `admin` / `admin123`(可用环境变量 `ADMIN_USERNAME` / `ADMIN_PASSWORD` 覆盖)
 
-> 注意:`.env` 已存在时不会被覆盖;已生成过真实 `JWT_SECRET` 后再次 `npm run init` 不会重置它(但会重置 admin 密码为默认值)。
+> 注意:`.env` 已存在时不会被覆盖;已生成过真实密钥后再次 `npm run init` 不会重置它们(但会重置 admin 密码为默认值)。
 
 ### 4. 构建前端并启动
 
@@ -119,7 +120,7 @@ GRAPH_FILES_ROOT=chatroom
 
 前端(PWA)自动注册 service worker 并请求订阅权限;收到消息时若接收者不在线,服务端推送系统通知(iOS Safari / 华为浏览器等走各自可达的推送端点;国内安卓 Chrome 走 FCM 不可达,引导使用华为浏览器)。
 
-服务端默认已生成 VAPID 密钥(见 `.env.example`);如需重新生成:
+**密钥由 `npm run init` 自动生成**写入 `.env`(`VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`);如需手动重新生成:
 
 ```bash
 node server/scripts/gen-vapid.mjs   # 本地工具脚本,未入库
@@ -129,7 +130,7 @@ node server/scripts/gen-vapid.mjs   # 本地工具脚本,未入库
 
 | 命令 | 模式 | 说明 |
 | --- | --- | --- |
-| `npm run init` | 初始化 | 一键:生成 `.env` + 随机 `JWT_SECRET` → 建库建表 → 创建管理员 |
+| `npm run init` | 初始化 | 一键:生成 `.env` + 随机 `JWT_SECRET` + VAPID 密钥对 → 建库建表 → 创建管理员 |
 | `npm start` | **生产/单端口全栈** | 托管前端产物 + API + Socket.IO,监听 `:3000`(唯一对外启动方式) |
 | `npm run build` | 构建 | 构建前端到 `client/dist`(改前端后执行) |
 | `npm run seed:demo` | 开发 | 本地演示数据(脚本未入库) |
@@ -142,9 +143,9 @@ node server/scripts/gen-vapid.mjs   # 本地工具脚本,未入库
 
 ## 🌐 生产部署
 
-**推荐:单端口全栈 + Cloudflare(零 Nginx)**
+**推荐:单端口全栈 + Cloudflare(零 Nginx)**（Nginx反代也不是不行）
 
-后端 `server/src/index.js` 同时托管前端产物(`client/dist`)、API 与 Socket.IO,把域名 443/80 映射/反代到本服务端口即可,证书由 Cloudflare 边缘承担(本项目不在 Node 内配置证书)。
+后端 `server/src/index.js` 同时托管前端产物(`client/dist`)、API 与 Socket.IO,把域名 443/80 映射/反代到本服务端口即可,证书可由 Cloudflare 边缘承担(本项目不在 Node 内配置证书)。
 
 1. 每次改前端后 `npm run build` 再重启后端
 2. `npm start`(`node server/src/index.js`)
@@ -170,7 +171,7 @@ node server/scripts/gen-vapid.mjs   # 本地工具脚本,未入库
 
 ## 🗂 目录结构
 
-前后端整合为单一 npm 项目(一个 `package.json` / 一个 `node_modules`):
+前后端为单一 npm 项目(一个 `package.json` / 一个 `node_modules`):
 
 ```
 server/                 # 后端
@@ -195,13 +196,9 @@ client/                 # 前端(Vue3 + Vite + PWA)
 **Q: 页面一直显示旧版,刷新也没用?**
 
 缓存有三层,按序处理:
-1. Cloudflare 面板 → Caching → **Purge Everything**
+1. Cloudflare（若使用）面板 → Caching → **Purge Everything**
 2. 浏览器 F12 → Application → Service Workers → **Unregister**,再 Clear site data
 3. 确认后端已重启且 `client/dist` 为新产物
-
-**Q: 中文显示乱码?**
-
-多为数据层 UTF-8 损坏(常见于 Windows 命令行直接 POST 中文)。请使用前端后台或 UTF-8 脚本创建中文数据。
 
 **Q: 管理员能登录,其他账号登录失败?**
 
@@ -214,7 +211,3 @@ client/                 # 前端(Vue3 + Vite + PWA)
 **Q: 为什么服务器连不上 Apple 推送?**
 
 服务器 IPv6 不可达时,Node 20+ 的 `autoSelectFamily` 会优先尝试 IPv6 导致 APNs 连接超时;本项目已内置强制 IPv4 的推送 Agent,正常无需处理。
-
-## 📄 License
-
-MIT
